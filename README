@@ -1,0 +1,11 @@
+# aci-mcp
+
+A Model Context Portocol (MCP) server that exposes Cisco ACI operations to a local LLM through tools.
+
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+cp settings.example.json settings.json
+
+ollmcp --mcp-server ./aci-mcp.py --model qwen2.5:7b
