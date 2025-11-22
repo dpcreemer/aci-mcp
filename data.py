@@ -113,10 +113,7 @@ class Data(object):
 
 	@property
 	def json(self):
-		if self.count > 1:
-			return self.imdata
-		else:
-			return self.imdata[0]
+		return self.imdata
 
 	@property
 	def xml(self):
