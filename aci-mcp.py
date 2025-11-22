@@ -69,22 +69,51 @@ def list_aps(tenant_dn: str) -> list[dict] :
   args:
     tenant: the dn for the tenant to search
   returns data on APs:
-    name, alias, dn (distinguished name)
+    name, alias, description, dn (distinguished name)
   """ 
   fab = get_fabric()
   data = fab.qr(tenant_dn, target="children", target_class="fvAp").data.json
-  if type(data) is not list: 
-    data = [data]
   rv = []
   for ap in data:
     rv.append(
       {
         "name": ap["fvAp"]["attributes"]["name"],
         "alias": ap["fvAp"]["attributes"]["nameAlias"],
+        "description": ap["fvAp"]["attributes"]["descr"],
         "dn": ap["fvAp"]["attributes"]["dn"]
       } 
     )
   return rv
+
+@mcp.tool
+def create_an_ap(tenant_name: str,
+                 name: str,
+                 alias: str = "",
+                 description: str = "") -> str:
+  """
+  Create a new Application Profile within the indicated tenant.
+  args:
+    tenant_name - the name of the tenant where AP should be created
+    name - a name for the new AP
+    alias - (optional) an alias for the new AP
+    description - (optional) a description for the new AP
+  """
+  fab = get_fabric()
+  payload = {
+    "fvAp": {
+      "attributes": {
+        "dn": f"uni/tn-{tenant_name}/ap-{name}",
+        "name": name,
+        "nameAlias": alias,
+        "descr": description
+      }
+    }
+  }
+  rv = fab.post(payload)
+  if not rv == "200":
+    return fab.apic.response.text
+  return "success"
+
 
 @mcp.tool
 def list_epgs(tenant_name: str, ap_name: str | None = None) -> list[dict]:
@@ -100,10 +129,8 @@ def list_epgs(tenant_name: str, ap_name: str | None = None) -> list[dict]:
   dn = f"uni/tn-{tenant_name}"
   if ap_name:
     dn += f"/ap-{ap_name}"
-    
+
   data = fab.qr(dn, target="subtree", target_class="fvAEPg").data.json
-  if type(data) is not list: 
-    data = [data]
   rv = []
   for epg in data:
     rv.append(
