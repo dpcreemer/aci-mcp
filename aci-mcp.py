@@ -61,18 +61,72 @@ def create_a_tenant(name: str, alias: str = "", description: str = "") -> str:
   if rv != 200:
     return fab.apic.response.text
   return "success"
+
+@mcp.tool
+def list_vrfs(tenant_name: str) -> list[dict]:
+  """
+  Get a list of VRF in a tenant
+  args:
+    tenant_name: the name of the tenant to search
+  returns data on the VRF
+    name, alias, description, dn
+  """
+  fab = get_fabric()
+  dn = f"uni/tn-{tenant_name}"
+  data = fab.qr(dn, target="children", target_class="fvCtx").data.json
+  rv = []
+  for vrf in data:
+    rv.append(
+      {
+        "name": vrf["fvCtx"]["attributes"]["name"],
+        "alias": vrf["fvCtx"]["attributes"]["nameAlias"],
+        "description": vrf["fvCtx"]["attributes"]["descr"],
+        "dn": vrf["fvCtx"]["attributes"]["dn"]
+      }
+    )
+    return rv
+
+@mcp.tool
+def create_a_vrf(tenant_name: str,
+                 name: str,
+                 alias: str = "",
+                 description: str = "") -> str:
+  """
+  Create a new VRF within the indicated tenant.
+  args:
+    tenant_name - the name of the tenant where the VRF should be created
+    name - a name for the new VRF
+    alias - (optional) an alias for the new VRF
+    description - (optional) a description for the new VRF
+  """
+  fab = get_fabric()
+  payload = {
+    "fvCtx": {
+      "attributes": {
+        "dn": f"uni/tn-{tenant_name}/ctx-{name}",
+        "name": name,
+        "nameAlias": alias,
+        "descr": description
+      }
+    }
+  }
+  rv = fab.post(payload)
+  if not rv == 200:
+    return fab.apic.response.text
+  return "success"
   
 @mcp.tool
-def list_aps(tenant_dn: str) -> list[dict] :
+def list_aps(tenant_name: str) -> list[dict]:
   """
   Get a list of Application Profiles (APs) in a tenant
   args:
-    tenant: the dn for the tenant to search
+    tenant_name: the name of the tenant to search
   returns data on APs:
     name, alias, description, dn (distinguished name)
   """ 
   fab = get_fabric()
-  data = fab.qr(tenant_dn, target="children", target_class="fvAp").data.json
+  dn = f"uni/tn-{tenant_name}"
+  data = fab.qr(dn, target="children", target_class="fvAp").data.json
   rv = []
   for ap in data:
     rv.append(
@@ -110,7 +164,7 @@ def create_an_ap(tenant_name: str,
     }
   }
   rv = fab.post(payload)
-  if not rv == "200":
+  if not rv == 200:
     return fab.apic.response.text
   return "success"
 
