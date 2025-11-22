@@ -27,7 +27,7 @@ def list_tenants() -> list[dict]:
   name, alias, description, and dn (distinguished name)
   """
   fab = get_fabric()
-  data = fab.qr("fvTenant").data.json
+  data = fab.query("fvTenant").run().json
   rv = []
   for tn in data:
     rv.append(
@@ -73,7 +73,7 @@ def list_vrfs(tenant_name: str) -> list[dict]:
   """
   fab = get_fabric()
   dn = f"uni/tn-{tenant_name}"
-  data = fab.qr(dn, target="children", target_class="fvCtx").data.json
+  data = fab.query(dn, target="children", target_class="fvCtx").run().json
   rv = []
   for vrf in data:
     rv.append(
@@ -126,7 +126,7 @@ def list_aps(tenant_name: str) -> list[dict]:
   """ 
   fab = get_fabric()
   dn = f"uni/tn-{tenant_name}"
-  data = fab.qr(dn, target="children", target_class="fvAp").data.json
+  data = fab.query(dn, target="children", target_class="fvAp").run().json
   rv = []
   for ap in data:
     rv.append(
@@ -184,7 +184,7 @@ def list_epgs(tenant_name: str, ap_name: str | None = None) -> list[dict]:
   if ap_name:
     dn += f"/ap-{ap_name}"
 
-  data = fab.qr(dn, target="subtree", target_class="fvAEPg").data.json
+  data = fab.query(dn, target="subtree", target_class="fvAEPg").run().json
   rv = []
   for epg in data:
     rv.append(
@@ -206,7 +206,7 @@ def list_nodes() -> list[dict]:
   id, name, role, address, model, serial number, and dn
   """
   fab = get_fabric()
-  data = fab.qr("fabricNode").data.json
+  data = fab.query("fabricNode").run().json
   rv = [{
     "id": node["fabricNode"]["attributes"]["id"],
     "name": node["fabricNode"]["attributes"]["name"],
