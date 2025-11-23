@@ -1,4 +1,7 @@
 {
+  "mcp_transport": "http",
+  "mcp_port": "8000",
+  "mcp_host": "0.0.0.0",
   "address": "apic.example.com",
   "username": "jquser",
   "password": "the-password"

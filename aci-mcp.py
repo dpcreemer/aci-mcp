@@ -1,18 +1,23 @@
 #!/usr/bin/env python
-import json
+import json, os
 from fabric import Fabric
 from fastmcp import FastMCP
 
 mcp = FastMCP("ACI")
 _FABRIC = None
 
+def _get_settings() -> dict:
+  with open("settings.json") as f:
+    settings = json.loads(f.read())
+  
+  return settings
+
 def get_fabric() -> Fabric:
   global _FABRIC
   if isinstance(_FABRIC, Fabric): 
     return _FABRIC
-
-  with open("settings.json") as f:
-    settings = json.loads(f.read())
+  
+  settings = _get_settings()
   
   fab = Fabric(settings["address"], settings["username"], settings["password"])
   fab.login()
@@ -104,6 +109,59 @@ def create_a_vrf(tenant_name: str,
     "fvCtx": {
       "attributes": {
         "dn": f"uni/tn-{tenant_name}/ctx-{name}",
+        "name": name,
+        "nameAlias": alias,
+        "descr": description
+      }
+    }
+  }
+  rv = fab.post(payload)
+  if not rv == 200:
+    return fab.apic.response.text
+  return "success"
+
+@mcp.tool
+def list_bds(tenant_name: str) -> list[dict]:
+  """
+  Get a list of Bridge Domains (BDs) in a tenant
+  args:
+    tenant_name: the name of the tenant to search
+  returns data on the BDs
+    name, alias, description, dn
+  """
+  fab = get_fabric()
+  dn = f"uni/tn-{tenant_name}"
+  data = fab.query(dn, target="children", target_class="fvBD").run().json
+  rv = []
+  for vrf in data:
+    rv.append(
+      {
+        "name": vrf["fvBD"]["attributes"]["name"],
+        "alias": vrf["fvBD"]["attributes"]["nameAlias"],
+        "description": vrf["fvBD"]["attributes"]["descr"],
+        "dn": vrf["fvBD"]["attributes"]["dn"]
+      }
+    )
+    return rv
+
+@mcp.tool
+def create_a_bd(tenant_name: str,
+                 name: str,
+                 alias: str = "",
+                 description: str = "") -> str:
+  """
+  Create a new Bridge Domian (BD) within the indicated tenant.
+  args:
+    tenant_name - the name of the tenant where the VRF should be created
+    name - a name for the new VRF
+    alias - (optional) an alias for the new VRF
+    description - (optional) a description for the new VRF
+  """
+  fab = get_fabric()
+  payload = {
+    "fvBD": {
+      "attributes": {
+        "dn": f"uni/tn-{tenant_name}/BD-{name}",
         "name": name,
         "nameAlias": alias,
         "descr": description
@@ -220,4 +278,17 @@ def list_nodes() -> list[dict]:
   return rv
 
 if __name__ == "__main__":
-  mcp.run()
+  # default to HTTP for container use; you can override to "stdio" for local
+  settings = _get_settings()
+  transport = settings["mcp_transport"]
+
+  if transport == "http":
+    print("transport is http")
+    port = settings["mcp_port"]
+    host = settings["mcp_host"]
+    print(f"listening at {host}:{port}")
+    mcp.run(transport=transport, host=host, port=port)  # HTTP MCP at /mcp
+  else:
+    # classic local/stdio mode for ollmcp etc.
+    print("transport is not http")
+    mcp.run()
