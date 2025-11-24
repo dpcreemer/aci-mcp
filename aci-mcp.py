@@ -7,13 +7,18 @@ mcp = FastMCP("ACI")
 _FABRIC = None
 
 def _get_settings() -> dict:
-  settings = {}
-  settings["mcp_transport"] = os.environ("MCP_TRANSPORT", "http")
-  settings["mcp_host"] = os.environ("MCP_HOST", "0.0.0.0")
-  settings["mcp_port"] = os.environ("MCP_PORT", "8000")
-  settings["apic_address"] = os.environ("APIC_ADDRESS", "sandbox-aci.rtp.lab")
-  settings["apic_username"] = os.environ("APIC_USERNAME", "")
-  settings["apic_password"] = os.environ("APIC_PASSWORD", "")
+  settings = {
+    "mcp_transport": "http",
+    "mcp_host": "0.0.0.0",
+    "mcp_port": "8000",
+    "apic_address": "",
+    "apic_username": "",
+    "apic_password": ""
+  }
+
+  for key in settings:
+    if key.upper() in os.environ:
+      settings[key] = os.environ[key]
 
   if not os.path.exists("settings.json"):
     return settings
