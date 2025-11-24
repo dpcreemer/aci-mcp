@@ -18,7 +18,7 @@ def _get_settings() -> dict:
 
   for key in settings:
     if key.upper() in os.environ:
-      settings[key] = os.environ[key]
+      settings[key] = os.environ[key.upper()]
 
   if not os.path.exists("settings.json"):
     return settings
