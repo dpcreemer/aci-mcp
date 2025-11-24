@@ -12,8 +12,8 @@ def _get_settings() -> dict:
     "mcp_host": "0.0.0.0",
     "mcp_port": "8000",
     "apic_address": "",
-    "apic_username": "",
-    "apic_password": ""
+    "username": "",
+    "password": ""
   }
 
   for key in settings:
@@ -39,7 +39,7 @@ def get_fabric() -> Fabric:
   
   settings = _get_settings()
   
-  fab = Fabric(settings["apic_address"], settings["apic_username"], settings["apic_password"])
+  fab = Fabric(settings["apic_address"], settings["username"], settings["password"])
   fab.login()
   _FABRIC
   return fab

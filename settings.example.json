@@ -3,6 +3,6 @@
   "mcp_host": "0.0.0.0",
   "mcp_port": "8000",
   "apic_address": "apic.example.com",
-  "apic_username": "jquser",
-  "apic_password": "the-password"
+  "username": "jquser",
+  "password": "the-password"
 }
